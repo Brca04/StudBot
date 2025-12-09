@@ -8,7 +8,7 @@ StudBot is a web-scraping Discord bot that notifies you when new job listings ar
 - Creates a local database in form of a json file
 
 ## Live Demo
-You can join Discord server with working StudBot by cliking on this [link](https://discord.gg/NNfmUvty).
+You can join Discord server with working StudBot by clicking on this [link](https://discord.gg/NNfmUvty).
 
 ## Compatibility
 - Virtually anything that can run Python
