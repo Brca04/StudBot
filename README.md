@@ -1,2 +1,7 @@
-# Discord-bot-for-student-job-listings
-StudBot is a web-scraping Discord bot that notifies you when new job listings are published on https://studentski-poslovi.hr/. StudBot also filters and rates jobs so it's easier for you to find a job.
+# StudBot
+StudBot is a web-scraping Discord bot that notifies you when new job listings are published on https://studentski-poslovi.hr/.  
+
+## Features
+- Bot checks for new jobs every minute
+- When new job is found, bot sends a Discord message that includes all basic information about the job
+- Bot filters jobs and rates them based on the hourly wage
