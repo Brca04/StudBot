@@ -10,11 +10,10 @@ import sys
 import signal
 
 # Your Discord webhook URL
-DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1397510612648591433/EGIVkncM3-JbmaE8ITbAsbGVy9y4lm_JmB0pT_hkFrJ10cfisQ4YzC0V2uiYvYOF29eh"
+DISCORD_WEBHOOK_URL = ""
 
 # Target URL (Zagreb jobs)
 URL = "https://studentski-poslovi.hr/pretraga?category=sve-kategorije&location=315&radius=10&activated_from=all&min_hour_rate="
-
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
