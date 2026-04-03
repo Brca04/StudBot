@@ -3,19 +3,18 @@
 import requests
 from bs4 import BeautifulSoup
 import json
+import re
 import time
 import os
 import sys
 import signal
 
 # Your Discord webhook URL
-DISCORD_WEBHOOK_URL = ""
+DISCORD_WEBHOOK_URL = "https://discord.com/api/webhooks/1397510612648591433/EGIVkncM3-JbmaE8ITbAsbGVy9y4lm_JmB0pT_hkFrJ10cfisQ4YzC0V2uiYvYOF29eh"
 
 # Target URL (Zagreb jobs)
-URL = "https://studentski-poslovi.hr/pretraga?category=sve-kategorije&province=zagreb&activated_from=all"
+URL = "https://studentski-poslovi.hr/pretraga?category=sve-kategorije&location=315&radius=10&activated_from=all&min_hour_rate="
 
-# Alternative URL for Page Iteration
-#URL = "https://studentski-poslovi.hr/pretraga?category=sve-kategorije&province=zagreb&search=Pretra%C5%BEi%20poslove&page=1"
 
 HEADERS = {"User-Agent": "Mozilla/5.0"}
 
@@ -37,13 +36,14 @@ def save_current(jobs):
         json.dump(jobs, f)
 
 # Scrape jobs from the site
-def fetch_listings():
+def fetch_listings(URL):
     response = requests.get(URL, headers=HEADERS)
     soup = BeautifulSoup(response.text, "html.parser")
     listings = []
 
-    for job_div in soup.find_all("div", attrs={"data-url": True}):
-        link = job_div["data-url"].strip()
+    for job_div in soup.find_all("div", dusk=re.compile(r"^job-\d+$")):
+        a_tag = job_div.find("a", href=True)
+        link = a_tag["href"].strip() if a_tag else ""
 
         title_tag = job_div.find("h5", attrs={"dusk": True})
         price_tag = job_div.find("span", class_="inline-block me-1 text-slate-600")
@@ -52,7 +52,7 @@ def fetch_listings():
             continue
 
         title = title_tag.get_text(strip=True)
-        pay = price_tag.get_text(strip=True) if price_tag else "N/A"
+        pay = " ".join(price_tag.get_text().split()) if price_tag else "N/A"
 
         listings.append({
             "title": title,
@@ -67,38 +67,49 @@ def send_discord_notification(new_jobs):
     if not new_jobs:
         return
 
-    content = "**@everyone 🆕 Novi studentski poslovi pronađeni!**\n"
+    header = "**@everyone 🆕 Novi studentski poslovi pronađeni!**\n"
+    chunks = [header]
 
     for job in new_jobs:
-        # Parse pay string to float (e.g. "8.00 €" → 8.0)
         try:
             pay_value = float(job["pay"].split()[0].replace(",", "."))
         except:
             pay_value = 0.0
 
-        # Choose Discord code block style based on pay
         if pay_value > 9.99:
-            content += f"• [{job['title']}](<{job['link']}>)\n```md\n#{job['pay']}\n```\n"
-        elif pay_value > 7.99 and pay_value < 10:
-            content += f"• [{job['title']}](<{job['link']}>)\n```diff\n+{job['pay']}\n```\n"
-        elif pay_value > 6.05 and pay_value < 8:
-            content += f"• [{job['title']}](<{job['link']}>)\n```diff\n-{job['pay']}\n```\n"
-        
+            entry = f"• [{job['title']}](<{job['link']}>)\n```md\n#{job['pay']}\n```\n"
+        elif pay_value > 7.99:
+            entry = f"• [{job['title']}](<{job['link']}>)\n```diff\n+{job['pay']}\n```\n"
+        elif pay_value > 6.05:
+            entry = f"• [{job['title']}](<{job['link']}>)\n```diff\n-{job['pay']}\n```\n"
+        else:
+            continue
 
-    payload = {"content": content}
-    response = requests.post(DISCORD_WEBHOOK_URL, json=payload)
+        if len(chunks[-1]) + len(entry) > 2000:
+            chunks.append("")
+        chunks[-1] += entry
 
-    if response.status_code == 204:
-        print("✅ Sent to Discord.")
-    else:
-        print(f"⚠️ Discord error: {response.status_code} - {response.text}")
+    for chunk in chunks:
+        if not chunk.strip():
+            continue
+        response = requests.post(DISCORD_WEBHOOK_URL, json={"content": chunk})
+        if response.status_code == 204:
+            print("✅ Sent to Discord.")
+        else:
+            print(f"⚠️ Discord error: {response.status_code} - {response.text}")
 
 # Main
 def main():
     print("\n🔎 Checking for new job listings...")
-    current = fetch_listings()
-    previous = load_previous()
+    current = []
+    for page in range(1, 6):  # Check first 5 pages
+        page_url = f"{URL}&page={page}"
+        page_listings = fetch_listings(page_url)
+        if not page_listings:
+            break
+        current.extend(page_listings)
 
+    previous = load_previous()
     previous_titles = {job["title"] for job in previous}
     new_jobs = [job for job in current if job["title"] not in previous_titles]
 
