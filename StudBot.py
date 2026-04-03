@@ -47,17 +47,20 @@ def fetch_listings(URL):
 
         title_tag = job_div.find("h5", attrs={"dusk": True})
         price_tag = job_div.find("span", class_="inline-block me-1 text-slate-600")
+        date_tag = job_div.find("span", class_="block text-sm text-slate-600")
 
         if not title_tag:
             continue
 
         title = title_tag.get_text(strip=True)
         pay = " ".join(price_tag.get_text().split()) if price_tag else "N/A"
+        date = date_tag.get_text(strip=True) if date_tag else ""
 
         listings.append({
             "title": title,
             "link": link,
-            "pay": pay
+            "pay": pay,
+            "date": date
         })
 
     return listings
@@ -76,12 +79,13 @@ def send_discord_notification(new_jobs):
         except:
             pay_value = 0.0
 
+        date_str = f" · {job['date']}" if job.get("date") else ""
         if pay_value > 9.99:
-            entry = f"• [{job['title']}](<{job['link']}>)\n```md\n#{job['pay']}\n```\n"
+            entry = f"• [{job['title']}](<{job['link']}>){date_str}\n```md\n# {job['pay']}\n```\n"
         elif pay_value > 7.99:
-            entry = f"• [{job['title']}](<{job['link']}>)\n```diff\n+{job['pay']}\n```\n"
+            entry = f"• [{job['title']}](<{job['link']}>){date_str}\n```diff\n+ {job['pay']}\n```\n"
         elif pay_value > 6.05:
-            entry = f"• [{job['title']}](<{job['link']}>)\n```diff\n-{job['pay']}\n```\n"
+            entry = f"• [{job['title']}](<{job['link']}>){date_str}\n```diff\n- {job['pay']}\n```\n"
         else:
             continue
 
