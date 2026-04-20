@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:studentski-poslovi.hr)",
+      "Bash(python -c \"import py_compile; py_compile.compile\\('alpha/StudBot.py', doraise=True\\); print\\('OK'\\)\")",
+      "Bash(py -c \"import py_compile; py_compile.compile\\('c:/Users/Bruno/Desktop/StudBot/StudBot/alpha/StudBot.py', doraise=True\\); print\\('OK'\\)\")",
+      "Bash(py -m unittest test/test_studbot.py -v)"
+    ]
+  }
+}
